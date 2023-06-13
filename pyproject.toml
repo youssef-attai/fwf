@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "fwif"
+version = "0.1.0"
+description = ""
+authors = ["Youssef Atta'i <youssefgalalnazem@gmail.com>"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.scripts]
+dev = "examples.dynamic_list_app:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
