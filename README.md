@@ -45,7 +45,7 @@ To get started with fwif, follow these steps:
    app.run()
    ```
 
-For more details and examples, please refer to the [example](https://github.com/youssef-attai/fwif/blob/main/example/) provided.
+For more details, please refer to the [example](https://github.com/youssef-attai/fwif/blob/main/examples/dynamic_list_app.py) provided.
 
 ## Contributing
 
