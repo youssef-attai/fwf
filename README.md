@@ -11,11 +11,11 @@ It provides a high-level abstraction for building applications entirely in Pytho
 
 - **Keyboard-driven:** Your fwif applications are keyboard-driven, you can easily associate keybindings with the different functions of your application.
 
-- **Simple UI:** fwif offers a straightforward user interface design approach. Components in fwif are just basic rectangles, making it effortless to create and combine them to achieve the desired user interface for your applications.
+- **Simple UI:** fwif offers a straightforward user interface design approach. Components in fwif are just basic rectangles, making it effortless to combine them to achieve the desired user interface.
 
-- **Flexible Component System:** fwif provides a flexible component system that allows you to organize in various ways, such as stacking, tiling, or overlaying, to create unique and dynamic user interfaces.
+- **Flexible Component System:** Each component in fwif is represented by a JSON object, allowing you to define the structure and properties of your UI elements in a hierarchical manner.
 
-- **Efficient Key Press Handling:** fwif employs an efficient key press handling mechanism inspired by Vim. Define key bindings for specific actions or functions, and fwif intelligently interprets user input.
+- **Efficient Key Press Handling:** fwif employs an efficient key press handling mechanism inspired by Vim. Define key bindings for specific actions or functions, and fwif will intelligently interpret user input.
 
 ## Getting Started
 
