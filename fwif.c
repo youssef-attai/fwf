@@ -108,6 +108,26 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                      json_object_get_int(x), json_object_get_int(y),
                      json_object_get_int(width), json_object_get_int(height));
     }
+
+    // Get the component's text
+    struct json_object *text;
+    json_object_object_get_ex(component, "text", &text);
+
+    // Get the component's text color
+    struct json_object *text_color;
+    json_object_object_get_ex(component, "foreground_color", &text_color);
+    struct json_object *text_red;
+    json_object_object_get_ex(text_color, "r", &text_red);
+    struct json_object *text_green;
+    json_object_object_get_ex(text_color, "g", &text_green);
+    struct json_object *text_blue;
+    json_object_object_get_ex(text_color, "b", &text_blue);
+
+    // Draw the text
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
+                   json_object_get_int(text_red) << 16 |
+                       json_object_get_int(text_green) << 8 |
+                       json_object_get_int(text_blue));
   }
 
   // Free the JSON object
