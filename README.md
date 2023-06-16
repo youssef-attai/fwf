@@ -26,12 +26,12 @@ To get started with fwif, follow these steps:
    pip install fwif
    ```
 
-2. Import the BaseApp class from the framework in your Python code:
+2. Import the `BaseApp` class from the framework in your Python code:
    ```python
    from fwif import BaseApp
    ```
 
-3. Create a subclass of BaseApp to define your custom application. 
+3. Create a subclass of `BaseApp` to define your custom application. 
 
 4. Override the `setup_keybindings` method to add your custom keybindings:
    ```python
