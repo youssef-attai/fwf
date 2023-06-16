@@ -77,6 +77,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                        json_object_get_int(border_width), LineSolid, CapButt,
                        JoinBevel);
 
+    if (json_object_get_int(border_width) > 0) {
       XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
                      json_object_get_int(border_red) << 16 |
                          json_object_get_int(border_green) << 8 |
@@ -85,6 +86,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                      DefaultGC(display, DefaultScreen(display)),
                      json_object_get_int(x), json_object_get_int(y),
                      json_object_get_int(width), json_object_get_int(height));
+    }
   }
 
   // Free the JSON object
