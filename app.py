@@ -26,34 +26,69 @@ read_pipe_fd = os.open(read_pipe_path, os.O_RDONLY)
 print("Main: Named pipe opened successfully for reading")
 
 
-class App:
-    def __init__(self, name):
-        self.name = name
-        self.components = []
-        self.padding = 10
+class Color:
+    def __init__(self, r: int, g: int, b: int):
+        self.r: int = r
+        self.g: int = g
+        self.b: int = b
 
-    def add_component(self):
-        component = {
-            "x": self.padding,
-            "y": len(self.components) * (50 + self.padding),
-            "width": 100,
-            "height": 50,
-        }
-        self.components.append(component)
 
-    def delete_component(self):
-        self.components.pop()
+class Component:
+    def __init__(
+            self,
+            x: int,
+            y: int,
+            width: int,
+            height: int,
+            background: Color,
+            foreground: Color,
+            border_color: Color,
+            border_width: int,
+            text: str
+    ):
+        self.x: int = x
+        self.y: int = y
+        self.width: int = width
+        self.height: int = height
+        self.background: Color = background
+        self.foreground: Color = foreground
+        self.border_color: Color = border_color
+        self.border_width: int = border_width
+        self.text: str = text
+        self.children: list['Component'] = []
 
-    def view(self):
+    def add_child(self, child):
+        self.children.append(child)
+
+    def remove_child(self, child):
+        self.children.remove(child)
+
+    def to_json(self):
         return {
-            "components": self.components,
+            "x": self.x,
+            "y": self.y,
+            "width": self.width,
+            "height": self.height,
+            "background_color": {
+                "r": self.background.r,
+                "g": self.background.g,
+                "b": self.background.b
+            },
+            "foreground_color": {
+                "r": self.foreground.r,
+                "g": self.foreground.g,
+                "b": self.foreground.b
+            },
+            "border_color": {
+                "r": self.border_color.r,
+                "g": self.border_color.g,
+                "b": self.border_color.b
+            },
+            "border_width": self.border_width,
+            "text": self.text,
+            "children": [child.to_json() for child in self.children]
         }
 
-    def handle_key(self, key):
-        if key == b"a":
-            self.add_component()
-        elif key == b"d":
-            self.delete_component()
 
 
 app = App("main")
