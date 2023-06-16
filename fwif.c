@@ -40,6 +40,19 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     struct json_object *height;
     json_object_object_get_ex(component, "height", &height);
 
+    // Get the component's background color
+    struct json_object *background_color;
+    json_object_object_get_ex(component, "background_color", &background_color);
+    struct json_object *bg_red;
+    json_object_object_get_ex(background_color, "r", &bg_red);
+    struct json_object *bg_green;
+    json_object_object_get_ex(background_color, "g", &bg_green);
+    struct json_object *bg_blue;
+    json_object_object_get_ex(background_color, "b", &bg_blue);
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
+                   json_object_get_int(bg_red) << 16 |
+                       json_object_get_int(bg_green) << 8 |
+                       json_object_get_int(bg_blue));
     XFillRectangle(display, window, DefaultGC(display, DefaultScreen(display)),
                    json_object_get_int(x), json_object_get_int(y),
                    json_object_get_int(width), json_object_get_int(height));
