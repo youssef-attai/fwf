@@ -90,37 +90,39 @@ class Component:
         }
 
 
+class KeyBindings:
+    def __init__(self):
+        self.__bindings = {}
 
-app = App("main")
+    def add(self, key, function):
+        self.__bindings[key] = function
 
-while True:
-    # Read from pipe
-    read_data = os.read(read_pipe_fd, 1024)
+    def remove(self, key):
+        if key in self.__bindings:
+            del self.__bindings[key]
 
-    # If window is closed
-    if read_data == b'':
-        print("Python: No data received")
-        break
+    def function(self, key):
+        return self.__bindings.get(key)
 
-    # If "q" is pressed
-    if read_data == b'q':
-        print("Python: Quit event received")
-        break
-
-    app.handle_key(read_data)
-
-    # Write application view data to pipe
-    write_data = str(app.view())
-    os.write(write_pipe_fd, write_data.encode())
+    def any_starts_with_except(self, key):
+        for k in self.__bindings.keys():
+            if k.startswith(key) and k != key:
+                return True
+        return False
 
 
-# Close the C program
-c_program.kill()
+class PressedBuffer:
+    def __init__(self):
+        self.__buffer = ""
 
-# Close the named pipe
-os.close(write_pipe_fd)
-print("Python: Named pipe closed successfully for writing")
+    def press(self, key):
+        self.__buffer += key
 
-# Close the named pipe
-os.close(read_pipe_fd)
-print("Python: Named pipe closed successfully for reading")
+    def clear(self):
+        self.__buffer = ""
+
+    @ property
+    def keys(self):
+        return self.__buffer
+
+
