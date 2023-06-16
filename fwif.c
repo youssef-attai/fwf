@@ -166,6 +166,26 @@ int main() {
     XNextEvent(display, &event);
 
     if (event.type == Expose) {
+      json_object *event_json = json_object_new_object();
+
+      // Send the expose event to the Python application
+      json_object_object_add(event_json, "expose", json_object_new_boolean(1));
+
+      const char *message = json_object_to_json_string(event_json);
+
+      write(write_pipe_fd, message, strlen(message));
+
+      // Clean up the JSON object
+      json_object_put(event_json);
+
+      // Read the message from the Python application
+      int bytes_read = read(read_pipe_fd, buffer, sizeof(buffer));
+      if (bytes_read > 0) {
+        // Null-terminate the message
+        buffer[bytes_read] = '\0';
+        // Draw the window content based on the received message
+        drawWindowContent(display, window, buffer);
+      }
     }
 
     if (event.type == KeyPress) {
