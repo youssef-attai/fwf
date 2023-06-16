@@ -2,18 +2,18 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/youssef-attai/fwif/blob/main/LICENSE)
 
-fwif (floating window framework) is a Python framework that enables easy development of floating window applications.
-It provides a high-level abstraction for building applications entirely in Python, while leveraging inter-process communication (IPC) to interact with the underlying window layer implemented in C with X11.
+fwif (floating window framework) is a Python framework that enables easy development of floating window applications using X11.
+It provides a high-level abstraction for building applications entirely in Python, while leveraging inter-process communication (IPC) to interact with the underlying window layer implemented in C.
 
 ## Features
 
-- **Floating window support:** fwif sets the necessary window manager (WM) attributes for your applications to make them behave like floating windows by default. This is especially useful when integrating your applications with tiling window managers like i3, qtile, etc.
+- **Designed for Tiling Window Manager Users:** fwif sets the necessary window manager (WM) attributes for your applications to make them appear as floating windows in tiling window managers like i3, qtile, etc.
 
 - **Keyboard-driven:** Your fwif applications are keyboard-driven, you can easily associate keybindings with the different functions of your application.
 
 - **Simple UI:** fwif offers a straightforward user interface design approach. Components in fwif are just basic rectangles, making it effortless to create and combine them to achieve the desired user interface for your applications.
 
-- **Flexible component system:** fwif provides a flexible component system that allows you to organize in various ways, such as stacking, tiling, or overlaying, to create unique and dynamic user interfaces.
+- **Flexible Component System:** fwif provides a flexible component system that allows you to organize in various ways, such as stacking, tiling, or overlaying, to create unique and dynamic user interfaces.
 
 - **Efficient Key Press Handling:** fwif employs an efficient key press handling mechanism inspired by Vim. Define key bindings for specific actions or functions, and fwif intelligently interprets user input.
 
