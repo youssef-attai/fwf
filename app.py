@@ -15,11 +15,11 @@ fwif = subprocess.Popen(
 
 # Open the named pipe for writing
 write_pipe_fd = os.open(write_pipe_path, os.O_WRONLY)
-print("Python: Named pipe opened successfully for writing")
+print("Main: Named pipe opened successfully for writing")
 
 # Open the named pipe for reading
 read_pipe_fd = os.open(read_pipe_path, os.O_RDONLY)
-print("Python: Named pipe opened successfully for reading")
+print("Main: Named pipe opened successfully for reading")
 
 
 class App:
