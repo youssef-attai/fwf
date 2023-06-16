@@ -95,3 +95,61 @@ void drawWindowContent(Display *display, Window window, const char *message) {
   // Flush the display to show the changes
   XFlush(display);
 }
+int main() {
+  // Initialize X11 display and create the window
+  Display *display = XOpenDisplay(NULL);
+
+  // Check if the display was opened successfully
+  if (display == NULL) {
+    fprintf(stderr, "Failed to open X11 display\n");
+    return 1;
+  }
+
+  // Get the default screen
+  int screen = DefaultScreen(display);
+
+  // Create the window
+  Window window = XCreateSimpleWindow(
+      display, RootWindow(display, screen), 0, 0, 400, 300, 0,
+      BlackPixel(display, screen), WhitePixel(display, screen));
+  // Select the events to listen to
+  XSelectInput(display, window,
+               ExposureMask | StructureNotifyMask | KeyPressMask);
+
+  // Show the window
+  XMapWindow(display, window);
+
+  // Flush the display to show the changes
+  XFlush(display);
+
+  // Event object
+  XEvent event;
+
+  // Event loop
+  while (1) {
+    // Wait for an event
+    XNextEvent(display, &event);
+
+    if (event.type == Expose) {
+    }
+
+    if (event.type == KeyPress) {
+    }
+
+    if (event.type == ClientMessage && event.xclient.data.l[0] == 0) {
+      // Exit the event loop when receiving the termination message from the
+      // Python application
+      break;
+    }
+
+    if (event.type == DestroyNotify) {
+      // Exit the event loop when the window is destroyed (closed)
+      break;
+    }
+  }
+  // Cleanup and exit
+  XDestroyWindow(display, window);
+  XCloseDisplay(display);
+
+  return 0;
+}
