@@ -95,6 +95,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
   // Flush the display to show the changes
   XFlush(display);
 }
+
 int main() {
   // Initialize X11 display and create the window
   Display *display = XOpenDisplay(NULL);
@@ -126,8 +127,38 @@ int main() {
   // Flush the display to show the changes
   XFlush(display);
 
+  // Create the named pipe for writing
+  const char *write_pipe_path = "/tmp/c_to_python";
+  mkfifo(write_pipe_path, 0777);
+
+  // Create the named pipe for reading
+  const char *read_pipe_path = "/tmp/python_to_c";
+
+  // Open the named pipe for reading
+  int read_pipe_fd = open(read_pipe_path, O_RDONLY);
+
+  // Check if the named pipe was opened successfully
+  if (read_pipe_fd == -1) {
+    fprintf(stderr, "Failed to open named pipe for reading\n");
+    return 1;
+  }
+  printf("C: Named pipe opened successfully\n");
+
+  // Open the named pipe for writing
+  int write_pipe_fd = open(write_pipe_path, O_WRONLY);
+
+  // Check if the named pipe was opened successfully
+  if (write_pipe_fd == -1) {
+    fprintf(stderr, "Failed to open named pipe for writing\n");
+    return 1;
+  }
+  printf("C: Named pipe opened successfully\n");
+
   // Event object
   XEvent event;
+
+  // Buffer for reading messages from the read pipe
+  char buffer[1024 * 1000];
 
   // Event loop
   while (1) {
@@ -151,6 +182,10 @@ int main() {
       break;
     }
   }
+
+  // Close the named pipe
+  close(read_pipe_fd);
+
   // Cleanup and exit
   XDestroyWindow(display, window);
   XCloseDisplay(display);
