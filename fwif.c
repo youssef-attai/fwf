@@ -189,6 +189,79 @@ int main() {
     }
 
     if (event.type == KeyPress) {
+      json_object *pressed_json = json_object_new_object();
+
+      // Send the key pressed to the Python application
+      KeySym key;
+      char key_buffer[10];
+      XLookupString(&event.xkey, key_buffer, sizeof(key_buffer), &key, NULL);
+
+      unsigned int state = event.xkey.state;
+
+      // Check for modifier keys
+      if (state & ControlMask) {
+        json_object_object_add(pressed_json, "ctrl",
+                               json_object_new_boolean(1));
+      }
+      if (state & ShiftMask) {
+        json_object_object_add(pressed_json, "shift",
+                               json_object_new_boolean(1));
+      }
+      if (state & Mod1Mask) {
+        json_object_object_add(pressed_json, "alt", json_object_new_boolean(1));
+      }
+
+      // Check for escape
+      if (key == XK_Escape) {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_string("escape"));
+      }
+
+      // Check for tab
+      else if (key == XK_Tab) {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_string("tab"));
+      }
+
+      // Check for space
+      else if (key == XK_space) {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_string("space"));
+      }
+
+      // Check for numbers
+      else if (key >= XK_0 && key <= XK_9) {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_int(key - XK_0));
+      }
+
+      // Check for letters
+      else if ((key >= XK_A && key <= XK_Z) || (key >= XK_a && key <= XK_z)) {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_string(key_buffer));
+      }
+
+      // Check for unknown keys
+      else {
+        json_object_object_add(pressed_json, "key",
+                               json_object_new_string("unknown"));
+      }
+
+      // Send the message to the Python application
+      const char *message = json_object_to_json_string(pressed_json);
+      write(write_pipe_fd, message, strlen(message));
+
+      // Cleanup
+      json_object_put(pressed_json);
+
+      // Read the message from the Python application
+      int bytes_read = read(read_pipe_fd, buffer, sizeof(buffer));
+      if (bytes_read > 0) {
+        // Null-terminate the message
+        buffer[bytes_read] = '\0';
+        // Draw the window content based on the received message
+        drawWindowContent(display, window, buffer);
+      }
     }
 
     if (event.type == ClientMessage && event.xclient.data.l[0] == 0) {
