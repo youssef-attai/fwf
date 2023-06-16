@@ -49,6 +49,21 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     json_object_object_get_ex(background_color, "g", &bg_green);
     struct json_object *bg_blue;
     json_object_object_get_ex(background_color, "b", &bg_blue);
+
+    // Get the component's border color
+    struct json_object *border_color;
+    json_object_object_get_ex(component, "border_color", &border_color);
+    struct json_object *border_red;
+    json_object_object_get_ex(border_color, "r", &border_red);
+    struct json_object *border_green;
+    json_object_object_get_ex(border_color, "g", &border_green);
+    struct json_object *border_blue;
+    json_object_object_get_ex(border_color, "b", &border_blue);
+
+    // Get the component's border width
+    struct json_object *border_width;
+    json_object_object_get_ex(component, "border_width", &border_width);
+
     XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
                    json_object_get_int(bg_red) << 16 |
                        json_object_get_int(bg_green) << 8 |
@@ -56,6 +71,21 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     XFillRectangle(display, window, DefaultGC(display, DefaultScreen(display)),
                    json_object_get_int(x), json_object_get_int(y),
                    json_object_get_int(width), json_object_get_int(height));
+
+    // Change border attributes
+    XSetLineAttributes(display, DefaultGC(display, DefaultScreen(display)),
+                       json_object_get_int(border_width), LineSolid, CapButt,
+                       JoinBevel);
+
+      XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
+                     json_object_get_int(border_red) << 16 |
+                         json_object_get_int(border_green) << 8 |
+                         json_object_get_int(border_blue));
+      XDrawRectangle(display, window,
+                     DefaultGC(display, DefaultScreen(display)),
+                     json_object_get_int(x), json_object_get_int(y),
+                     json_object_get_int(width), json_object_get_int(height));
+  }
 
   // Free the JSON object
   json_object_put(json);
