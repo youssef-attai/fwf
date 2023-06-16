@@ -2,12 +2,20 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/youssef-attai/fwif/blob/main/LICENSE)
 
-fwif (Floating Window Framework) is a powerful Python framework built on top of [Tkinter](https://docs.python.org/3/library/tkinter.html). It allows users to create highly configurable, keyboard-driven graphical user interfaces (GUIs) that are ideal for scratchpad-style applications. With this framework, you can easily build custom alternatives to the scratchpads used with [i3](https://i3wm.org/) or create your own keyboard-centric applications.
+fwif (floating window framework) is a Python framework that enables easy development of floating window applications.
+It provides a high-level abstraction for building applications entirely in Python, while leveraging inter-process communication (IPC) to interact with the underlying window layer implemented in C with X11.
 
 ## Features
 
-- Keyboard-driven: Your fwif applications are keyboard-driven, you can easily associate keybindings with the different functions of your application.
-- Floating window support: The framework sets the necessary window manager (WM) attributes for your applications to behave like floating windows by default. This is especially useful when integrating your applications with tiling window managers like i3.
+- **Floating window support:** fwif sets the necessary window manager (WM) attributes for your applications to make them behave like floating windows by default. This is especially useful when integrating your applications with tiling window managers like i3, qtile, etc.
+
+- **Keyboard-driven:** Your fwif applications are keyboard-driven, you can easily associate keybindings with the different functions of your application.
+
+- **Simple UI:** fwif offers a straightforward user interface design approach. Components in fwif are just basic rectangles, making it effortless to create and combine them to achieve the desired user interface for your applications.
+
+- **Flexible component system:** fwif provides a flexible component system that allows you to organize in various ways, such as stacking, tiling, or overlaying, to create unique and dynamic user interfaces.
+
+- **Efficient Key Press Handling:** fwif employs an efficient key press handling mechanism inspired by Vim. Define key bindings for specific actions or functions, and fwif intelligently interprets user input.
 
 ## Getting Started
 
@@ -20,14 +28,14 @@ To get started with fwif, follow these steps:
 
 2. Import the BaseApp class from the framework in your Python code:
    ```python
-   from fwif import FloatingWindow
+   from fwif import BaseApp
    ```
 
 3. Create a subclass of BaseApp to define your custom application. 
 
 4. Override the `setup_keybindings` method to add your custom keybindings:
    ```python
-   class MyApp(FloatingWindow):
+   class MyApp(BaseAPp):
     def __init__(self):
         super().__init__()
 
