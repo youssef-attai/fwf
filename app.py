@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 
@@ -125,4 +126,56 @@ class PressedBuffer:
     def keys(self):
         return self.__buffer
 
+
+class BaseApp:
+    def __init__(self):
+        self.components = []
+
+        self.keybindings = KeyBindings()
+        self.setup_keybindings()
+
+    def view(self):
+        return {"components": [component.to_json() for component in self.components]}
+
+    def setup_keybindings(self):
+        self.keybindings.add('q', self.quit)
+
+    def run(self):
+        while True:
+            # Read from pipe
+            print("Main: Waiting for data from pipe")
+            read_data = os.read(read_pipe_fd, 1024)
+
+            # If window is closed
+            if read_data == b'':
+                self.quit()
+
+            # Decode the data
+            try:
+                data = read_data.decode()
+                print("Main: Data received from pipe: " + data)
+                json_data = json.loads(data)
+
+                # If the data is a key press
+                if "key" in json_data:
+                    key = json_data["key"]
+
+                    # If the key is in the key bindings
+                    func = self.keybindings.function(key)
+                    if func is not None:
+                        func()
+
+            except UnicodeDecodeError:
+                pass
+
+            # Write application view data to pipe
+            write_data = str(self.view())
+            os.write(write_pipe_fd, write_data.encode())
+
+    def quit(self):
+        print("Main: Quitting")
+        fwif.kill()
+        os.close(write_pipe_fd)
+        os.close(read_pipe_fd)
+        exit(0)
 
