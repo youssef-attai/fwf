@@ -5,8 +5,8 @@ write_pipe_path = "/tmp/python_to_c"
 read_pipe_path = "/tmp/c_to_python"
 
 # Start the C program as a subprocess
-c_program = subprocess.Popen(
-    ["./program"],
+fwif = subprocess.Popen(
+    ["./fwif"],
     stdout=subprocess.PIPE,
     stderr=subprocess.PIPE,
 )
