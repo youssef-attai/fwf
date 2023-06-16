@@ -14,6 +14,10 @@ fwif = subprocess.Popen(
 # NOTE: The C program will create the named pipes
 
 # Open the named pipe for writing
+try:
+    os.mkfifo(write_pipe_path)
+except FileExistsError:
+    pass
 write_pipe_fd = os.open(write_pipe_path, os.O_WRONLY)
 print("Main: Named pipe opened successfully for writing")
 
