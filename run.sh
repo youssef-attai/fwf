@@ -7,5 +7,5 @@ gcc -o fwif fwif.c -lX11 -ljson-c
 export PYTHONPATH=$(pwd)
 
 # Run
-python3 app.py
+python examples/dynamic_list_app.py
 
