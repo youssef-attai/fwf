@@ -129,6 +129,20 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                        json_object_get_int(text_green) << 8 |
                        json_object_get_int(text_blue));
 
+    // Get the text's font size
+    struct json_object *font_size;
+    json_object_object_get_ex(component, "font_size", &font_size);
+
+    // Create a font with a specific size
+    // FIXME: change fixed to font coming from component
+    XFontStruct *font = createFont(display, "fixed", json_object_get_int(font_size));
+    if (!font) {
+      XCloseDisplay(display);
+      exit(1);
+    }
+    // Set the font
+    XSetFont(display, DefaultGC(display, DefaultScreen(display)), font->fid);
+
     // Split the text into lines
     char *text_copy = strdup(json_object_get_string(text));
     char *line = strtok(text_copy, "\n");
@@ -142,6 +156,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     }
 
     // Clean up
+    XFreeFont(display, font);
     free(text_copy);
   }
 
