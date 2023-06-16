@@ -128,6 +128,21 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                    json_object_get_int(text_red) << 16 |
                        json_object_get_int(text_green) << 8 |
                        json_object_get_int(text_blue));
+
+    // Split the text into lines
+    char *text_copy = strdup(json_object_get_string(text));
+    char *line = strtok(text_copy, "\n");
+    int line_height = 0;
+    while (line != NULL) {
+      XDrawString(display, window, DefaultGC(display, DefaultScreen(display)),
+                  json_object_get_int(x) + 5,
+                  json_object_get_int(y) + 5 + line_height, line, strlen(line));
+      line = strtok(NULL, "\n");
+      line_height += 20;
+    }
+
+    // Clean up
+    free(text_copy);
   }
 
   // Free the JSON object
