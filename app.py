@@ -317,3 +317,12 @@ class App(BaseApp):
         b = random.randint(0, 255)
 
         return Color(r, g, b)
+
+
+def main():
+    app = App()
+    app.run()
+
+
+if __name__ == "__main__":
+    main()
