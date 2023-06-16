@@ -112,6 +112,10 @@ int main() {
   Window window = XCreateSimpleWindow(
       display, RootWindow(display, screen), 0, 0, 400, 300, 0,
       BlackPixel(display, screen), WhitePixel(display, screen));
+  Atom dialogType = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+  Atom wmWindowType = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
+  XChangeProperty(display, window, wmWindowType, XA_ATOM, 32, PropModeReplace,
+                  (unsigned char *)&dialogType, 1);
   // Select the events to listen to
   XSelectInput(display, window,
                ExposureMask | StructureNotifyMask | KeyPressMask);
