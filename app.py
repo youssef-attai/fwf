@@ -1,3 +1,4 @@
+import random
 import json
 import os
 import subprocess
@@ -179,3 +180,140 @@ class BaseApp:
         os.close(read_pipe_fd)
         exit(0)
 
+
+class App(BaseApp):
+    def __init__(self):
+        super().__init__()
+        self.selected_index = -1
+
+    def setup_keybindings(self):
+        super().setup_keybindings()
+        self.keybindings.add('a', self.add_item)
+        self.keybindings.add('d', self.delete_all)
+        self.keybindings.add('dd', self.delete_item)
+        self.keybindings.add('x', self.delete_item)
+        self.keybindings.add('dG', self.delete_from_selection_to_last)
+        self.keybindings.add('dgg', self.delete_from_selection_to_first)
+        self.keybindings.add('gg', self.select_first)
+        self.keybindings.add('G', self.select_last)
+        self.keybindings.add('k', self.move_selection_up)
+        self.keybindings.add('j', self.move_selection_down)
+        self.keybindings.add('K', self.move_item_up)
+        self.keybindings.add('J', self.move_item_down)
+        self.keybindings.add('c', self.change_color)
+
+    def change_color(self):
+        if self.selected_index >= 0 and len(self.components) > 0:
+            component = self.components[self.selected_index]
+            component.background = self.random_color()
+            self.update_items()
+
+    def delete_from_selection_to_first(self):
+        if self.selected_index >= 0 and len(self.components) > 0:
+            for _ in range(self.selected_index + 1):
+                self.components.pop(0)
+            self.selected_index = 0
+            self.update_items()
+
+    def delete_from_selection_to_last(self):
+        if self.selected_index >= 0 and len(self.components) > 0:
+            for _ in range(self.selected_index, len(self.components)):
+                self.components.pop()
+            self.selected_index = min(
+                self.selected_index, len(self.components) - 1)
+            self.update_items()
+
+    def select_first(self):
+        if len(self.components) > 0:
+            self.selected_index = 0
+            self.update_items()
+
+    def select_last(self):
+        if len(self.components) > 0:
+            self.selected_index = len(self.components) - 1
+            self.update_items()
+
+    def add_item(self):
+        item = Component(
+            x=10,
+            y=30 * (len(self.components) + 1),
+            width=200,
+            height=20,
+            background=self.random_color(),
+            foreground=Color(0, 0, 0),
+            border_color=Color(0, 0, 0),
+            border_width=1,
+            text=""
+        )
+        self.components.append(item)
+        self.selected_index = len(self.components) - 1
+        self.update_items()
+
+    def delete_all(self):
+        self.components = []
+        self.selected_index = -1
+        self.update_items()
+
+    def delete_item(self):
+        if self.selected_index >= 0 and len(self.components) > 0:
+            self.components.pop(self.selected_index)
+            self.selected_index = min(
+                self.selected_index, len(self.components) - 1)
+            self.update_items()
+
+    def move_selection_down(self):
+        if self.selected_index < len(self.components) - 1:
+            self.selected_index += 1
+            self.update_items()
+
+    def move_selection_up(self):
+        if self.selected_index > 0:
+            self.selected_index -= 1
+            self.update_items()
+
+    def move_item_down(self):
+        if self.selected_index < len(self.components) - 1:
+            self.components[
+                self.selected_index
+            ], self.components[
+                self.selected_index + 1
+            ] = self.components[
+                self.selected_index + 1
+            ], self.components[
+                self.selected_index
+            ]
+
+            self.selected_index += 1
+            self.update_items()
+
+    def move_item_up(self):
+        if self.selected_index > 0:
+            self.components[
+                self.selected_index
+            ], self.components[
+                self.selected_index - 1
+            ] = self.components[
+                self.selected_index - 1
+            ], self.components[
+                self.selected_index
+            ]
+
+            self.selected_index -= 1
+            self.update_items()
+
+    def update_items(self):
+        for i, component in enumerate(self.components):
+            component: Component
+            component.x = 10
+            component.y = 30 * (i + 1)
+            if i == self.selected_index:
+                component.border_width = 5
+            else:
+                component.border_width = 0
+
+    def random_color(self):
+        r = random.randint(0, 255)
+        g = random.randint(0, 255)
+        b = random.randint(0, 255)
+
+        return Color(r, g, b)
