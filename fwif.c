@@ -11,6 +11,27 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+// Function to create a font with a specific size
+XFontStruct *createFont(Display *display, const char *fontName, int fontSize) {
+  XFontStruct *fontInfo = XLoadQueryFont(display, fontName);
+  if (!fontInfo) {
+    fprintf(stderr, "Failed to load font: %s\n", fontName);
+    return NULL;
+  }
+
+  // Adjust the font size
+  fontInfo->ascent =
+      (int)(fontSize * fontInfo->ascent / fontInfo->max_bounds.ascent);
+  fontInfo->descent =
+      (int)(fontSize * fontInfo->descent / fontInfo->max_bounds.descent);
+  fontInfo->max_bounds.ascent = fontInfo->ascent;
+  fontInfo->max_bounds.descent = fontInfo->descent;
+  fontInfo->min_bounds.ascent = fontInfo->ascent;
+  fontInfo->min_bounds.descent = fontInfo->descent;
+
+  return fontInfo;
+}
+
 // Function to draw the window content based on the received message
 void drawWindowContent(Display *display, Window window, const char *message) {
   // Clear the window
