@@ -168,13 +168,15 @@ class BaseApp:
 
             # If window is closed
             if read_data == b'':
+                print("Read 0 bytes from pipe")
                 self.quit()
 
             # Decode the data
             try:
                 data = read_data.decode()
-                print("Main: Data received from pipe: " + data)
+                print("Data received from pipe: " + data)
                 json_data = json.loads(data)
+                print("JSON data received from pipe: " + str(json_data))
 
                 # If the data is a key press
                 if "key" in json_data:
