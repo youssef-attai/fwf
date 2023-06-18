@@ -16,8 +16,15 @@ int WINDOW_HEIGHT = 500;
 
 // Function to draw the window content based on the received message
 void drawWindowContent(Display *display, Window window, const char *message) {
+  // Create Pixmaps for double buffering
+  Pixmap pixmap = XCreatePixmap(display, window, WINDOW_WIDTH, WINDOW_HEIGHT,
+                                DefaultDepth(display, DefaultScreen(display)));
+
   // Clear the window
-  XClearWindow(display, window);
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)),
+                 WhitePixel(display, DefaultScreen(display)));
+  XFillRectangle(display, pixmap, DefaultGC(display, DefaultScreen(display)), 0,
+                 0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
   // Read JSON components from the message and draw them on the window
   struct json_object *json = json_tokener_parse(message);
@@ -71,7 +78,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                    json_object_get_int(bg_red) << 16 |
                        json_object_get_int(bg_green) << 8 |
                        json_object_get_int(bg_blue));
-    XFillRectangle(display, window, DefaultGC(display, DefaultScreen(display)),
+    XFillRectangle(display, pixmap, DefaultGC(display, DefaultScreen(display)),
                    json_object_get_int(x), json_object_get_int(y),
                    json_object_get_int(width), json_object_get_int(height));
 
@@ -85,7 +92,7 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                      json_object_get_int(border_red) << 16 |
                          json_object_get_int(border_green) << 8 |
                          json_object_get_int(border_blue));
-      XDrawRectangle(display, window,
+      XDrawRectangle(display, pixmap,
                      DefaultGC(display, DefaultScreen(display)),
                      json_object_get_int(x), json_object_get_int(y),
                      json_object_get_int(width), json_object_get_int(height));
@@ -116,12 +123,17 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     char *line = strtok(text_copy, "\n");
     int line_height = 0;
     while (line != NULL) {
-      XDrawString(display, window, DefaultGC(display, DefaultScreen(display)),
+      XDrawString(display, pixmap, DefaultGC(display, DefaultScreen(display)),
                   json_object_get_int(x) + 5,
                   json_object_get_int(y) + 5 + line_height, line, strlen(line));
       line = strtok(NULL, "\n");
       line_height += 20;
     }
+
+    // Map the pixmap to the window
+    XCopyArea(display, pixmap, window,
+              DefaultGC(display, DefaultScreen(display)), 0, 0, WINDOW_WIDTH,
+              WINDOW_HEIGHT, 0, 0);
 
     // Clean up
     free(text_copy);
