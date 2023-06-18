@@ -2,29 +2,6 @@ import json
 import os
 import subprocess
 
-write_pipe_path = "/tmp/python_to_c"
-read_pipe_path = "/tmp/c_to_python"
-
-# Start the C program as a subprocess
-fwif = subprocess.Popen(
-    ["./fwif"],
-    stdout=subprocess.PIPE,
-    stderr=subprocess.PIPE,
-)
-
-# NOTE: The C program will create the named pipes
-
-# Open the named pipe for writing
-try:
-    os.mkfifo(write_pipe_path)
-except FileExistsError:
-    pass
-write_pipe_fd = os.open(write_pipe_path, os.O_WRONLY)
-print("Main: Named pipe opened successfully for writing")
-
-# Open the named pipe for reading
-read_pipe_fd = os.open(read_pipe_path, os.O_RDONLY)
-print("Main: Named pipe opened successfully for reading")
 
 
 class Color:
@@ -143,7 +120,37 @@ class BaseApp:
     def setup_keybindings(self):
         self.keybindings.add('q', self.quit)
 
+    def __initial_setup(self):
+        FWIF_READ_PIPE = os.environ["FWIF_READ_PIPE"]
+        FWIF_WRITE_PIPE = os.environ["FWIF_WRITE_PIPE"]
+
+        self.__fwif = subprocess.Popen(
+            ["./fwif"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+
+        # Start threads to read stdout and stderr from fwif process
+        self.__stdout_thread = threading.Thread(
+            target=self.__read_stream, args=(self.__fwif.stdout,))
+        self.__stderr_thread = threading.Thread(
+            target=self.__read_stream, args=(self.__fwif.stderr,))
+        self.__stdout_thread.start()
+        self.__stderr_thread.start()
+
+        try:
+            os.mkfifo(FWIF_READ_PIPE)
+        except FileExistsError:
+            pass
+
+        self.__write_pipe_fd = os.open(FWIF_READ_PIPE, os.O_WRONLY)
+        print("Named pipe opened successfully for writing")
+
+        self.__read_pipe_fd = os.open(FWIF_WRITE_PIPE, os.O_RDONLY)
+        print("Named pipe opened successfully for reading")
+
     def run(self):
+        self.__initial_setup()
         while True:
             # Read from pipe
             print("Main: Waiting for data from pipe")
