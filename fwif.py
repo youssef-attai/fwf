@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import threading
 
 
 
@@ -120,6 +121,11 @@ class BaseApp:
     def setup_keybindings(self):
         self.keybindings.add('q', self.quit)
 
+    @staticmethod
+    def __read_stream(stream):
+        for line in iter(stream.readline, b''):
+            print(line.decode("utf-8"))
+
     def __initial_setup(self):
         FWIF_READ_PIPE = os.environ["FWIF_READ_PIPE"]
         FWIF_WRITE_PIPE = os.environ["FWIF_WRITE_PIPE"]
@@ -187,4 +193,10 @@ class BaseApp:
         fwif.kill()
         os.close(write_pipe_fd)
         os.close(read_pipe_fd)
+        print("Quitting")
+        self.__fwif.kill()
+        self.__stdout_thread.join()
+        self.__stderr_thread.join()
+        os.close(self.__write_pipe_fd)
+        os.close(self.__read_pipe_fd)
         exit(0)
