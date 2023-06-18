@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Compile
+gcc -o fwif fwif.c -lX11 -ljson-c
+
+# Environment variables
+export FWIF_WRITE_PIPE=/tmp/fwif_write_pipe
+export FWIF_READ_PIPE=/tmp/fwif_read_pipe
+
+# Run
+./fwif
+
