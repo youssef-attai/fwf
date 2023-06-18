@@ -110,13 +110,14 @@ class PressedBuffer:
 
 class BaseApp:
     def __init__(self):
-        self.components = []
-
         self.keybindings = KeyBindings()
         self.setup_keybindings()
 
-    def view(self):
-        return {"components": [component.to_json() for component in self.components]}
+    def __view(self):
+        return {"components": [component.to_json() for component in self.components()]}
+
+    def components(self) -> list[Component]:
+        return []
 
     def setup_keybindings(self):
         self.keybindings.add('q', self.quit)
@@ -185,14 +186,11 @@ class BaseApp:
                 pass
 
             # Write application view data to pipe
-            write_data = str(self.view())
-            os.write(write_pipe_fd, write_data.encode())
+            write_data = str(self.__view())
+            print("Writing data to pipe: " + write_data)
+            os.write(self.__write_pipe_fd, write_data.encode())
 
     def quit(self):
-        print("Main: Quitting")
-        fwif.kill()
-        os.close(write_pipe_fd)
-        os.close(read_pipe_fd)
         print("Quitting")
         self.__fwif.kill()
         self.__stdout_thread.join()
