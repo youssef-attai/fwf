@@ -148,9 +148,10 @@ int main() {
   int screen = DefaultScreen(display);
 
   // Create the window
-  Window window = XCreateSimpleWindow(
-      display, RootWindow(display, screen), 0, 0, 400, 300, 0,
-      BlackPixel(display, screen), WhitePixel(display, screen));
+  Window window =
+      XCreateWindow(display, RootWindow(display, screen), 0, 0, WINDOW_WIDTH,
+                    WINDOW_HEIGHT, 0, DefaultDepth(display, screen),
+                    InputOutput, DefaultVisual(display, screen), 0, NULL);
   Atom dialogType = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
   Atom wmWindowType = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
   XChangeProperty(display, window, wmWindowType, XA_ATOM, 32, PropModeReplace,
