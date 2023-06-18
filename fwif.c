@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+int WINDOW_WIDTH = 500;
+int WINDOW_HEIGHT = 500;
 
 // Function to draw the window content based on the received message
 void drawWindowContent(Display *display, Window window, const char *message) {
