@@ -178,12 +178,12 @@ class BaseApp:
                 json_data = json.loads(data)
                 print("JSON data received from pipe: " + str(json_data))
 
-                # If the data is a key press
-                if "key" in json_data:
-                    key = json_data["key"]
+                if json_data["type"] == "keypress":
+                    pressed = json_data["pressed"]
+                    print("Key pressed: " + pressed["key"])
 
                     # If the key is in the key bindings
-                    func = self.keybindings.function(key)
+                    func = self.keybindings.function(pressed["key"])
                     if func is not None:
                         func()
 
