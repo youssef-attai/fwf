@@ -3,6 +3,7 @@ import os
 import subprocess
 import threading
 
+WINDOW_LAYER_MESSAGE_BUFFER_SIZE = 1024
 
 
 class Color:
@@ -160,8 +161,10 @@ class BaseApp:
         self.__initial_setup()
         while True:
             # Read from pipe
-            print("Main: Waiting for data from pipe")
-            read_data = os.read(read_pipe_fd, 1024)
+            print("Waiting for data from pipe")
+            read_data = os.read(self.__read_pipe_fd,
+                                WINDOW_LAYER_MESSAGE_BUFFER_SIZE)
+            print(f"Data received from pipe: {read_data}")
 
             # If window is closed
             if read_data == b'':
