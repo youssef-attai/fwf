@@ -11,26 +11,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// Function to create a font with a specific size
-XFontStruct *createFont(Display *display, const char *fontName, int fontSize) {
-  XFontStruct *fontInfo = XLoadQueryFont(display, fontName);
-  if (!fontInfo) {
-    fprintf(stderr, "Failed to load font: %s\n", fontName);
-    return NULL;
-  }
-
-  // Adjust the font size
-  fontInfo->ascent =
-      (int)(fontSize * fontInfo->ascent / fontInfo->max_bounds.ascent);
-  fontInfo->descent =
-      (int)(fontSize * fontInfo->descent / fontInfo->max_bounds.descent);
-  fontInfo->max_bounds.ascent = fontInfo->ascent;
-  fontInfo->max_bounds.descent = fontInfo->descent;
-  fontInfo->min_bounds.ascent = fontInfo->ascent;
-  fontInfo->min_bounds.descent = fontInfo->descent;
-
-  return fontInfo;
-}
 
 // Function to draw the window content based on the received message
 void drawWindowContent(Display *display, Window window, const char *message) {
@@ -129,20 +109,6 @@ void drawWindowContent(Display *display, Window window, const char *message) {
                        json_object_get_int(text_green) << 8 |
                        json_object_get_int(text_blue));
 
-    // Get the text's font size
-    struct json_object *font_size;
-    json_object_object_get_ex(component, "font_size", &font_size);
-
-    // Create a font with a specific size
-    // FIXME: change fixed to font coming from component
-    XFontStruct *font = createFont(display, "fixed", json_object_get_int(font_size));
-    if (!font) {
-      XCloseDisplay(display);
-      exit(1);
-    }
-    // Set the font
-    XSetFont(display, DefaultGC(display, DefaultScreen(display)), font->fid);
-
     // Split the text into lines
     char *text_copy = strdup(json_object_get_string(text));
     char *line = strtok(text_copy, "\n");
@@ -156,7 +122,6 @@ void drawWindowContent(Display *display, Window window, const char *message) {
     }
 
     // Clean up
-    XFreeFont(display, font);
     free(text_copy);
   }
 
