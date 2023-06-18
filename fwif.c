@@ -5,17 +5,140 @@
 #include <fcntl.h>
 #include <json-c/json.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
 #include <unistd.h>
 
-int WINDOW_WIDTH = 500;
-int WINDOW_HEIGHT = 500;
+int APPLICATION_LAYER_MESSAGE_BUFFER_SIZE = 1000000;
 
-// Function to draw the window content based on the received message
-void drawWindowContent(Display *display, Window window, const char *message) {
+void fwif_load_environment();
+
+const char *FWIF_WRITE_PIPE;
+const char *FWIF_READ_PIPE;
+int write_pipe;
+int read_pipe;
+int fwif_setup_write_pipe();
+int fwif_setup_read_pipe();
+void fwif_close_pipes();
+
+Display *display;
+Display *fwif_create_display();
+
+int screen;
+int fwif_create_screen();
+
+int WINDOW_WIDTH;
+int WINDOW_HEIGHT;
+Window window;
+Window fwif_create_window(const char *title);
+
+void fwif_draw(struct json_object *);
+
+void fwif_event_loop();
+int fwif_handle_event(XEvent); // returns 0 if the event loop should stop
+struct json_object *fwif_receive_updates();
+struct json_object *fwif_create_event(const char *type);
+void fwif_send_event(struct json_object *event);
+
+void fwif_cleanup();
+void fwif_destroy_window();
+void fwif_destroy_display();
+
+int main() {
+  fwif_load_environment();
+
+  printf("FWIF_WRITE_PIPE: %s\n", FWIF_WRITE_PIPE);
+  printf("FWIF_READ_PIPE: %s\n", FWIF_READ_PIPE);
+
+  read_pipe = fwif_setup_read_pipe();
+  write_pipe = fwif_setup_write_pipe();
+
+  display = fwif_create_display();
+  screen = fwif_create_screen();
+
+  WINDOW_WIDTH = 500;
+  WINDOW_HEIGHT = 500;
+  window = fwif_create_window("fwif");
+
+  XMapWindow(display, window);
+
+  fwif_event_loop();
+
+  fwif_cleanup();
+  return 0;
+}
+
+void fwif_event_loop() {
+  XEvent event;
+  int running = 1;
+  while (running) {
+    XNextEvent(display, &event);
+    running = fwif_handle_event(event);
+  }
+}
+
+void fwif_load_environment() {
+  FWIF_WRITE_PIPE = getenv("FWIF_WRITE_PIPE");
+  FWIF_READ_PIPE = getenv("FWIF_READ_PIPE");
+}
+
+int fwif_setup_write_pipe() {
+  mkfifo(FWIF_WRITE_PIPE, 0666);
+  int write_pipe = open(FWIF_WRITE_PIPE, O_WRONLY);
+  if (write_pipe == -1) {
+    fprintf(stderr, "Cannot open WRITE named pipe\n");
+    exit(1);
+  }
+  return write_pipe;
+}
+
+int fwif_setup_read_pipe() {
+  int read_pipe = open(FWIF_READ_PIPE, O_RDONLY);
+  if (read_pipe == -1) {
+    fprintf(stderr, "Cannot open READ named pipe\n");
+    exit(1);
+  }
+  return read_pipe;
+}
+
+Display *fwif_create_display() {
+  Display *display = XOpenDisplay(NULL);
+  if (display == NULL) {
+    fprintf(stderr, "Cannot open display\n");
+    exit(1);
+  }
+  return display;
+}
+
+void fwif_destroy_display() { XCloseDisplay(display); }
+
+int fwif_create_screen() {
+  int screen = DefaultScreen(display);
+  return screen;
+}
+
+Window fwif_create_window(const char *title) {
+  int width = WINDOW_WIDTH;
+  int height = WINDOW_HEIGHT;
+
+  Window window =
+      XCreateWindow(display, RootWindow(display, screen), 0, 0, width, height,
+                    0, CopyFromParent, CopyFromParent, CopyFromParent, 0, NULL);
+  XStoreName(display, window, title);
+
+  Atom dialog_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
+  Atom wm_window_type = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
+  XChangeProperty(display, window, wm_window_type, XA_ATOM, 32, PropModeReplace,
+                  (unsigned char *)&dialog_type, 1);
+
+  XSelectInput(display, window,
+               ExposureMask | StructureNotifyMask | KeyPressMask);
+  return window;
+}
+
+void fwif_destroy_window() { XDestroyWindow(display, window); }
+
+void fwif_draw(struct json_object *components) {
   // Create Pixmaps for double buffering
   Pixmap pixmap = XCreatePixmap(display, window, WINDOW_WIDTH, WINDOW_HEIGHT,
                                 DefaultDepth(display, DefaultScreen(display)));
@@ -26,13 +149,9 @@ void drawWindowContent(Display *display, Window window, const char *message) {
   XFillRectangle(display, pixmap, DefaultGC(display, DefaultScreen(display)), 0,
                  0, WINDOW_WIDTH, WINDOW_HEIGHT);
 
-  // Read JSON components from the message and draw them on the window
-  struct json_object *json = json_tokener_parse(message);
-  struct json_object *components;
-  json_object_object_get_ex(json, "components", &components);
-  int components_count = json_object_array_length(components);
-
-  struct json_object *component; // Component iterator
+  int components_count =
+      json_object_array_length(components); // Get the number of components
+  struct json_object *component;            // Component iterator
 
   // Iterate over the components
   for (int i = 0; i < components_count; i++) {
@@ -129,210 +248,138 @@ void drawWindowContent(Display *display, Window window, const char *message) {
       line = strtok(NULL, "\n");
       line_height += 20;
     }
-
-    // Map the pixmap to the window
     XCopyArea(display, pixmap, window,
               DefaultGC(display, DefaultScreen(display)), 0, 0, WINDOW_WIDTH,
               WINDOW_HEIGHT, 0, 0);
-
-    // Clean up
     free(text_copy);
   }
-
-  // Free the JSON object
-  json_object_put(json);
-
-  // Flush the display to show the changes
   XFlush(display);
 }
 
-int main() {
-  // Initialize X11 display and create the window
-  Display *display = XOpenDisplay(NULL);
+void fwif_sync_components() {
+  struct json_object *updates = fwif_receive_updates();
 
-  // Check if the display was opened successfully
-  if (display == NULL) {
-    fprintf(stderr, "Failed to open X11 display\n");
-    return 1;
+  struct json_object *components;
+  json_object_object_get_ex(updates, "components", &components);
+
+  fwif_draw(components);
+
+  // json_object_put(updates);
+  // json_object_put(components);
+}
+
+int fwif_handle_event(XEvent xevent) {
+  struct json_object *event;
+
+  switch (xevent.type) {
+  case Expose:
+
+    event = fwif_create_event("expose");
+
+    fwif_send_event(event);
+
+    fwif_sync_components();
+
+    break;
+
+  case KeyPress:
+
+    event = fwif_create_event("keypress");
+
+    json_object *pressed_json = json_object_new_object();
+
+    KeySym key;
+    char key_buffer[10];
+    XLookupString(&xevent.xkey, key_buffer, sizeof(key_buffer), &key, NULL);
+
+    unsigned int state = xevent.xkey.state;
+
+    if (state & ControlMask)
+      json_object_object_add(pressed_json, "ctrl", json_object_new_boolean(1));
+    if (state & ShiftMask)
+      json_object_object_add(pressed_json, "shift", json_object_new_boolean(1));
+    if (state & Mod1Mask)
+      json_object_object_add(pressed_json, "alt", json_object_new_boolean(1));
+
+    if (key == XK_Escape)
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_string("escape"));
+    else if (key == XK_Tab)
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_string("tab"));
+    else if (key == XK_space)
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_string("space"));
+    else if (key >= XK_0 && key <= XK_9)
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_int(key - XK_0));
+    else if ((key >= XK_A && key <= XK_Z) || (key >= XK_a && key <= XK_z))
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_string(key_buffer));
+    else
+      json_object_object_add(pressed_json, "key",
+                             json_object_new_string("unknown"));
+
+    json_object_object_add(event, "pressed", pressed_json);
+
+    fwif_send_event(event);
+
+    fwif_sync_components();
+
+    // json_object_put(pressed_json);
+
+    break;
+
+  case ClientMessage:
+    if (xevent.xclient.data.l[0] == 0)
+      return 0;
+
+  case DestroyNotify:
+    return 0;
   }
 
-  // Get the default screen
-  int screen = DefaultScreen(display);
+  return 1;
+}
 
-  // Create the window
-  Window window =
-      XCreateWindow(display, RootWindow(display, screen), 0, 0, WINDOW_WIDTH,
-                    WINDOW_HEIGHT, 0, DefaultDepth(display, screen),
-                    InputOutput, DefaultVisual(display, screen), 0, NULL);
-  Atom dialogType = XInternAtom(display, "_NET_WM_WINDOW_TYPE_DIALOG", False);
-  Atom wmWindowType = XInternAtom(display, "_NET_WM_WINDOW_TYPE", False);
-  XChangeProperty(display, window, wmWindowType, XA_ATOM, 32, PropModeReplace,
-                  (unsigned char *)&dialogType, 1);
-  // Select the events to listen to
-  XSelectInput(display, window,
-               ExposureMask | StructureNotifyMask | KeyPressMask);
+struct json_object *fwif_receive_updates() {
+  char buffer[APPLICATION_LAYER_MESSAGE_BUFFER_SIZE];
+  int bytes_read = read(read_pipe, buffer, sizeof(buffer));
 
-  // Show the window
-  XMapWindow(display, window);
-
-  // Flush the display to show the changes
-  XFlush(display);
-
-  // Create the named pipe for writing
-  const char *write_pipe_path = "/tmp/c_to_python";
-  mkfifo(write_pipe_path, 0777);
-
-  // Create the named pipe for reading
-  const char *read_pipe_path = "/tmp/python_to_c";
-
-  // Open the named pipe for reading
-  int read_pipe_fd = open(read_pipe_path, O_RDONLY);
-
-  // Check if the named pipe was opened successfully
-  if (read_pipe_fd == -1) {
-    fprintf(stderr, "Failed to open named pipe for reading\n");
-    return 1;
-  }
-  printf("C: Named pipe opened successfully\n");
-
-  // Open the named pipe for writing
-  int write_pipe_fd = open(write_pipe_path, O_WRONLY);
-
-  // Check if the named pipe was opened successfully
-  if (write_pipe_fd == -1) {
-    fprintf(stderr, "Failed to open named pipe for writing\n");
-    return 1;
-  }
-  printf("C: Named pipe opened successfully\n");
-
-  // Event object
-  XEvent event;
-
-  // Buffer for reading messages from the read pipe
-  char buffer[1024 * 1000];
-
-  // Event loop
-  while (1) {
-    // Wait for an event
-    XNextEvent(display, &event);
-
-    if (event.type == Expose) {
-      json_object *event_json = json_object_new_object();
-
-      // Send the expose event to the Python application
-      json_object_object_add(event_json, "expose", json_object_new_boolean(1));
-
-      const char *message = json_object_to_json_string(event_json);
-
-      write(write_pipe_fd, message, strlen(message));
-
-      // Clean up the JSON object
-      json_object_put(event_json);
-
-      // Read the message from the Python application
-      int bytes_read = read(read_pipe_fd, buffer, sizeof(buffer));
-      if (bytes_read > 0) {
-        // Null-terminate the message
-        buffer[bytes_read] = '\0';
-        // Draw the window content based on the received message
-        drawWindowContent(display, window, buffer);
-      }
-    }
-
-    if (event.type == KeyPress) {
-      json_object *pressed_json = json_object_new_object();
-
-      // Send the key pressed to the Python application
-      KeySym key;
-      char key_buffer[10];
-      XLookupString(&event.xkey, key_buffer, sizeof(key_buffer), &key, NULL);
-
-      unsigned int state = event.xkey.state;
-
-      // Check for modifier keys
-      if (state & ControlMask) {
-        json_object_object_add(pressed_json, "ctrl",
-                               json_object_new_boolean(1));
-      }
-      if (state & ShiftMask) {
-        json_object_object_add(pressed_json, "shift",
-                               json_object_new_boolean(1));
-      }
-      if (state & Mod1Mask) {
-        json_object_object_add(pressed_json, "alt", json_object_new_boolean(1));
-      }
-
-      // Check for escape
-      if (key == XK_Escape) {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_string("escape"));
-      }
-
-      // Check for tab
-      else if (key == XK_Tab) {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_string("tab"));
-      }
-
-      // Check for space
-      else if (key == XK_space) {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_string("space"));
-      }
-
-      // Check for numbers
-      else if (key >= XK_0 && key <= XK_9) {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_int(key - XK_0));
-      }
-
-      // Check for letters
-      else if ((key >= XK_A && key <= XK_Z) || (key >= XK_a && key <= XK_z)) {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_string(key_buffer));
-      }
-
-      // Check for unknown keys
-      else {
-        json_object_object_add(pressed_json, "key",
-                               json_object_new_string("unknown"));
-      }
-
-      // Send the message to the Python application
-      const char *message = json_object_to_json_string(pressed_json);
-      write(write_pipe_fd, message, strlen(message));
-
-      // Cleanup
-      json_object_put(pressed_json);
-
-      // Read the message from the Python application
-      int bytes_read = read(read_pipe_fd, buffer, sizeof(buffer));
-      if (bytes_read > 0) {
-        // Null-terminate the message
-        buffer[bytes_read] = '\0';
-        // Draw the window content based on the received message
-        drawWindowContent(display, window, buffer);
-      }
-    }
-
-    if (event.type == ClientMessage && event.xclient.data.l[0] == 0) {
-      // Exit the event loop when receiving the termination message from the
-      // Python application
-      break;
-    }
-
-    if (event.type == DestroyNotify) {
-      // Exit the event loop when the window is destroyed (closed)
-      break;
-    }
+  if (bytes_read == -1) {
+    fprintf(stderr, "Cannot read from pipe\n");
+    exit(1);
   }
 
-  // Close the named pipe
-  close(read_pipe_fd);
+  if (bytes_read > 0)
+    buffer[bytes_read] = '\0'; // Null-terminate the message
 
-  // Cleanup and exit
-  XDestroyWindow(display, window);
-  XCloseDisplay(display);
+  printf("Received JSON: %s\n", buffer);
 
-  return 0;
+  struct json_object *json = json_tokener_parse(buffer);
+  return json;
+}
+
+void fwif_close_pipes() {
+  close(write_pipe);
+  close(read_pipe);
+
+  unlink(FWIF_WRITE_PIPE);
+  unlink(FWIF_READ_PIPE);
+}
+
+void fwif_cleanup() {
+  fwif_close_pipes();
+  fwif_destroy_display();
+  fwif_destroy_window();
+}
+
+struct json_object *fwif_create_event(const char *type) {
+  struct json_object *event = json_object_new_object();
+  json_object_object_add(event, "type", json_object_new_string(type));
+  return event;
+}
+
+void fwif_send_event(struct json_object *event) {
+  const char *event_string = json_object_to_json_string(event);
+  write(write_pipe, event_string, strlen(event_string));
 }
