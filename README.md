@@ -1,6 +1,6 @@
 # fwif
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/youssef-attai/fwif/blob/main/LICENSE)
+> This is a failed attempt to creating my own implementation of something like [rofi](https://github.com/davatorium/rofi). The main goal was to create a simple framework that enables me to easily build floating GUIs for any tool or utility I might need in my dev workflow. The reason it's a "failed attempt" is because of its shitty performance. If you think you can help I'd be forever grateful.
 
 fwif (floating window framework) is a Python framework that enables easy development of floating window applications using X11.
 It provides a high-level abstraction for building applications entirely in Python, while leveraging inter-process communication (IPC) to interact with the underlying window layer implemented in C.
