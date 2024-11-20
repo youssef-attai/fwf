@@ -35,7 +35,7 @@ To get started with fwif, follow these steps:
 
 4. Override the `setup_keybindings` method to add your custom keybindings:
    ```python
-   class MyApp(BaseAPp):
+   class MyApp(BaseApp):
     def __init__(self):
         super().__init__()
 
